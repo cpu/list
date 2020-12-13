@@ -7111,7 +7111,7 @@ org.zw
 
 // newGTLDs
 
-// List of new gTLDs imported from https://www.icann.org/resources/registries/gtlds/v2/gtlds.json on 2020-12-11T13:40:43Z
+// List of new gTLDs imported from https://www.icann.org/resources/registries/gtlds/v2/gtlds.json on 2020-12-13T14:47:37Z
 // This list is auto-generated, don't edit it manually.
 // aaa : 2015-02-26 American Automobile Association, Inc.
 aaa
@@ -7125,10 +7125,13 @@ abarth
 // abb : 2014-10-24 ABB Ltd
 abb
 
+// abbott : 2014-07-24 Abbott Laboratories, Inc.
+abbott
+
 // abbvie : 2015-07-30 AbbVie Inc.
 abbvie
 
-// abc : 2015-07-30
+// abc : 2015-07-30 Disney Enterprises, Inc.
 abc
 
 // able : 2015-06-25 Able Inc.
