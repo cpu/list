@@ -33,7 +33,7 @@ jobs:
         uses: peter-evans/create-pull-request@v3
         with:
           token: "${{ secrets.BOT_PAT }}"
-          push-to-fork: tld-update-bot/list
+          #push-to-fork: tld-update-bot/list
           commit-message: "util: gTLD data autopull updates for ${{ env.NOW }}"
           title: "util: gTLD autopull updates for ${{ env.NOW }}"
           body: "Public suffix list gTLD data updates from `tools/patchnewgtlds` for ${{ env.NOW }}."
