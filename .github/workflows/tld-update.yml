@@ -35,9 +35,9 @@ jobs:
         with:
           token: "${{ secrets.BOT_PAT }}"
           #push-to-fork: tld-update-bot/list
-          commit-message: "util: gTLD data autopull updates for ${{ steps.get-date.now }}"
-          title: "util: gTLD autopull updates for ${{ steps.get-date.now }}"
-          body: "Public suffix list gTLD data updates from `tools/patchnewgtlds` for ${{ steps.get-date.now }}."
+          commit-message: "util: gTLD data autopull updates for ${{ steps.get-date.outputs.now }}"
+          title: "util: gTLD autopull updates for ${{ steps.get-date.outputs.now }}"
+          body: "Public suffix list gTLD data updates from `tools/patchnewgtlds` for ${{ steps.get-date.outputs.now }}."
           committer: "GitHub <noreply@github.com>"
           author: "GitHub <noreply@github.com>"
           labels: tld-update
