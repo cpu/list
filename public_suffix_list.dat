@@ -7116,9 +7116,6 @@ org.zw
 // aaa : 2015-02-26 American Automobile Association, Inc.
 aaa
 
-// aarp : 2015-05-21 AARP
-aarp
-
 // abarth : 2015-07-30 Fiat Chrysler Automobiles N.V.
 abarth
 
@@ -7128,7 +7125,7 @@ abb
 // abbvie : 2015-07-30 AbbVie Inc.
 abbvie
 
-// abc : 2015-07-30
+// cpu : 2015-07-30
 abc
 
 // able : 2015-06-25 Able Inc.
