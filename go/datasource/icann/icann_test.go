@@ -110,6 +110,33 @@ func TestEntryComment(t *testing.T) {
 			},
 			expected: "// cpu :  @cpu's bargain gTLD emporium",
 		},
+		{
+			name: "Cancelled Full entry",
+			entry: GTLDEntry{
+				ALabel:                  "cpu",
+				DateOfContractSignature: "2019-06-13",
+				ContractTerminated:      true,
+				RegistryOperator:        "@cpu's bargain gTLD emporium",
+			},
+			expected: "// cpu : 2019-06-13 @cpu's bargain gTLD emporium (cancelled)",
+		},
+		{
+			name: "Cancelled Entry with empty contract signature date and operator",
+			entry: GTLDEntry{
+				ALabel:             "cpu",
+				ContractTerminated: true,
+			},
+			expected: "// cpu :  (cancelled)",
+		},
+		{
+			name: "Cancelled Entry with empty contract signature and non-empty operator",
+			entry: GTLDEntry{
+				ALabel:             "cpu",
+				RegistryOperator:   "@cpu's bargain gTLD emporium",
+				ContractTerminated: true,
+			},
+			expected: "// cpu :  @cpu's bargain gTLD emporium (cancelled)",
+		},
 	}
 
 	for _, tc := range testCases {

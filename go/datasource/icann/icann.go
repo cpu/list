@@ -94,6 +94,9 @@ func (e *GTLDEntry) Normalize() {
 //    '// <ALabel> : <DateOfContractSignature> <RegistryOperator>'
 //
 // In both cases the <DateOfContractSignature> may be empty.
+//
+// If the contract has been terminated, but the gTLD has not yet been removed the
+// comment will end with the string "(cancelled)".
 func (e GTLDEntry) Comment() string {
 	parts := []string{
 		"//",
@@ -104,6 +107,9 @@ func (e GTLDEntry) Comment() string {
 	// Avoid two trailing spaces if registry operator is empty
 	if e.RegistryOperator != "" {
 		parts = append(parts, e.RegistryOperator)
+	}
+	if e.ContractTerminated {
+		parts = append(parts, "(cancelled)")
 	}
 	return strings.Join(parts, " ")
 }
