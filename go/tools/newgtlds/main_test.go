@@ -323,7 +323,7 @@ ceepeeyou
 `
 
 	var buf bytes.Buffer
-	if err := renderData(io.Writer(&buf), entries); err != nil {
+	if err := renderGTLDData(io.Writer(&buf), entries); err != nil {
 		t.Fatalf("unexpected error from renderData: %v", err)
 	}
 
