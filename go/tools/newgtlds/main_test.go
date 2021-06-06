@@ -18,18 +18,18 @@ import (
 func TestEntryNormalize(t *testing.T) {
 	testCases := []struct {
 		name          string
-		inputEntry    pslEntry
-		expectedEntry pslEntry
+		inputEntry    gtldEntry
+		expectedEntry gtldEntry
 	}{
 		{
 			name: "already normalized",
-			inputEntry: pslEntry{
+			inputEntry: gtldEntry{
 				ALabel:                  "cpu",
 				ULabel:                  "ｃｐｕ",
 				DateOfContractSignature: "2019-06-13",
 				RegistryOperator:        "@cpu's bargain gTLD emporium",
 			},
-			expectedEntry: pslEntry{
+			expectedEntry: gtldEntry{
 				ALabel:                  "cpu",
 				ULabel:                  "ｃｐｕ",
 				DateOfContractSignature: "2019-06-13",
@@ -38,14 +38,14 @@ func TestEntryNormalize(t *testing.T) {
 		},
 		{
 			name: "extra whitespace",
-			inputEntry: pslEntry{
+			inputEntry: gtldEntry{
 				ALabel:                  "  cpu    ",
 				ULabel:                  "   ｃｐｕ   ",
 				DateOfContractSignature: "   2019-06-13    ",
 				RegistryOperator: "     @cpu's bargain gTLD emporium " +
 					"(now with bonus whitespace)    ",
 			},
-			expectedEntry: pslEntry{
+			expectedEntry: gtldEntry{
 				ALabel:                  "cpu",
 				ULabel:                  "ｃｐｕ",
 				DateOfContractSignature: "2019-06-13",
@@ -55,12 +55,12 @@ func TestEntryNormalize(t *testing.T) {
 		},
 		{
 			name: "no explicit uLabel",
-			inputEntry: pslEntry{
+			inputEntry: gtldEntry{
 				ALabel:                  "cpu",
 				DateOfContractSignature: "2019-06-13",
 				RegistryOperator:        "@cpu's bargain gTLD emporium",
 			},
-			expectedEntry: pslEntry{
+			expectedEntry: gtldEntry{
 				ALabel:                  "cpu",
 				ULabel:                  "cpu",
 				DateOfContractSignature: "2019-06-13",
@@ -84,12 +84,12 @@ func TestEntryNormalize(t *testing.T) {
 func TestEntryComment(t *testing.T) {
 	testCases := []struct {
 		name     string
-		entry    pslEntry
+		entry    gtldEntry
 		expected string
 	}{
 		{
 			name: "Full entry",
-			entry: pslEntry{
+			entry: gtldEntry{
 				ALabel:                  "cpu",
 				DateOfContractSignature: "2019-06-13",
 				RegistryOperator:        "@cpu's bargain gTLD emporium",
@@ -98,14 +98,14 @@ func TestEntryComment(t *testing.T) {
 		},
 		{
 			name: "Entry with empty contract signature date and operator",
-			entry: pslEntry{
+			entry: gtldEntry{
 				ALabel: "cpu",
 			},
 			expected: "// cpu : ",
 		},
 		{
 			name: "Entry with empty contract signature and non-empty operator",
-			entry: pslEntry{
+			entry: gtldEntry{
 				ALabel:           "cpu",
 				RegistryOperator: "@cpu's bargain gTLD emporium",
 			},
@@ -159,9 +159,9 @@ func (h *mockHandler) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
 
 func TestGetPSLEntries(t *testing.T) {
 	mockData := struct {
-		GTLDs []pslEntry
+		GTLDs []gtldEntry
 	}{
-		GTLDs: []pslEntry{
+		GTLDs: []gtldEntry{
 			{
 				ALabel:                  "ceepeeyou",
 				DateOfContractSignature: "2099-06-13",
@@ -196,7 +196,7 @@ func TestGetPSLEntries(t *testing.T) {
 	// assumed to be static/correct and it simplifies the handler.
 	jsonBytes, _ := json.Marshal(mockData)
 
-	expectedEntries := []pslEntry{
+	expectedEntries := []gtldEntry{
 		{
 			ALabel:                  "ceepeeyou",
 			ULabel:                  "ceepeeyou",
@@ -216,21 +216,21 @@ func TestGetPSLEntries(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	entries, err := getPSLEntries(server.URL)
+	entries, err := getGTLDPSLEntries(server.URL)
 	if err != nil {
-		t.Fatalf("expected no error from getPSLEntries with mockHandler. Got %v",
+		t.Fatalf("expected no error from getGTLDPSLEntries with mockHandler. Got %v",
 			err)
 	}
 
 	if len(entries) != len(expectedEntries) {
-		t.Fatalf("expected %d entries from getPSLEntries with mockHandler. Got %d",
+		t.Fatalf("expected %d entries from getGTLDPSLEntries with mockHandler. Got %d",
 			len(expectedEntries),
 			len(entries))
 	}
 
 	for i, entry := range entries {
 		if deepEqual := reflect.DeepEqual(*entry, expectedEntries[i]); !deepEqual {
-			t.Errorf("getPSLEntries() entry index %d was %#v, expected %#v",
+			t.Errorf("getTLDPSLEntries() entry index %d was %#v, expected %#v",
 				i,
 				*entry,
 				expectedEntries[i])
@@ -241,7 +241,7 @@ func TestGetPSLEntries(t *testing.T) {
 func TestGetPSLEntriesEmptyResults(t *testing.T) {
 	// Mock an empty result
 	mockData := struct {
-		GTLDs []pslEntry
+		GTLDs []gtldEntry
 	}{}
 
 	// NOTE: swallowing the possible err return here because the mock data is
@@ -252,18 +252,18 @@ func TestGetPSLEntriesEmptyResults(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	_, err := getPSLEntries(server.URL)
+	_, err := getGTLDPSLEntries(server.URL)
 	if err == nil {
-		t.Error("expected error from getPSLEntries with empty results mockHandler. Got nil")
+		t.Error("expected error from getGTLDPSLEntries with empty results mockHandler. Got nil")
 	}
 }
 
 func TestGetPSLEntriesEmptyFilteredResults(t *testing.T) {
 	// Mock data that will be filtered to an empty list
 	mockData := struct {
-		GTLDs []pslEntry
+		GTLDs []gtldEntry
 	}{
-		GTLDs: []pslEntry{
+		GTLDs: []gtldEntry{
 			{
 				// NOTE: GTLD matches a legacyGTLDs map entry to ensure filtering.
 				ALabel:                  "aero",
@@ -293,14 +293,14 @@ func TestGetPSLEntriesEmptyFilteredResults(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	_, err := getPSLEntries(server.URL)
+	_, err := getGTLDPSLEntries(server.URL)
 	if err == nil {
-		t.Error("expected error from getPSLEntries with empty filtered results mockHandler. Got nil")
+		t.Error("expected error from getGTLDPSLEntries with empty filtered results mockHandler. Got nil")
 	}
 }
 
 func TestRenderData(t *testing.T) {
-	entries := []*pslEntry{
+	entries := []*gtldEntry{
 		{
 			ALabel:                  "ceepeeyou",
 			ULabel:                  "ceepeeyou",
@@ -791,7 +791,7 @@ accountants
 			s := httptest.NewServer(mockHandler(tc.pslJSON))
 			defer s.Close()
 
-			content, err := process(tc.file, s.URL, fakeClock)
+			content, err := processGTLDs(tc.file, s.URL, fakeClock)
 			if err != nil && tc.expectedErrMsg == "" {
 				t.Errorf("unexpected err: %v", err)
 			} else if err != nil && err.Error() != tc.expectedErrMsg {

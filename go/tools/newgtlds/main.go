@@ -22,6 +22,10 @@ const (
 	// 2). See https://www.icann.org/resources/pages/registries/registries-en for
 	// more information.
 	ICANN_GTLD_JSON_URL = "https://www.icann.org/resources/registries/gtlds/v2/gtlds.json"
+	// IANA_TLDS_TXT_URL is the URL for the IANA "Public Suffix List" of TLDs
+	// in the ICP-3 Root - including new ccTLDs, EBRERO gTLDS or things not in
+	// the JSON File above that should be included in the PSL.  Note: UPPERCASE
+	IANA_TLDS_TXT_URL = "http://data.iana.org/TLD/tlds-alpha-by-domain.txt"
 	// PSL_GTLDS_SECTION_HEADER marks the start of the newGTLDs section of the
 	// overall public suffix dat file.
 	PSL_GTLDS_SECTION_HEADER = "// newGTLDs"
@@ -71,11 +75,11 @@ var (
 // List of new gTLDs imported from {{ .URL }} on {{ .Date.Format .DateFormat }}
 // This list is auto-generated, don't edit it manually.`))
 
-	// pslTemplate is a parsed text/template instance for rendering a list of pslEntry
-	// objects in the format used by the public suffix list.
+	// pslTemplate is a parsed text/template instance for rendering a list of
+	// gtldEntry objects in the format used by the public suffix list.
 	//
 	// It expects the following template data:
-	//   Entries - a list of pslEntry objects.
+	//   Entries - a list of gtldEntry objects.
 	pslTemplate = template.Must(
 		template.New("public-suffix-list-gtlds").Parse(`
 {{- range .Entries }}
@@ -84,9 +88,9 @@ var (
 {{ end }}`))
 )
 
-// pslEntry is a struct matching a subset of the gTLD data fields present in
+// gtldEntry is a struct matching a subset of the gTLD data fields present in
 // each object entry of the "GLTDs" array from ICANN_GTLD_JSON_URL.
-type pslEntry struct {
+type gtldEntry struct {
 	// ALabel contains the ASCII gTLD name. For internationalized gTLDs the GTLD
 	// field is expressed in punycode.
 	ALabel string `json:"gTLD"`
@@ -108,10 +112,10 @@ type pslEntry struct {
 	RemovalDate string
 }
 
-// normalize will normalize a pslEntry by mutating it in place to trim the
+// normalize will normalize a gtldEntry by mutating it in place to trim the
 // string fields of whitespace and by populating the ULabel with the ALabel if
 // the ULabel is empty.
-func (e *pslEntry) normalize() {
+func (e *gtldEntry) normalize() {
 	e.ALabel = strings.TrimSpace(e.ALabel)
 	e.ULabel = strings.TrimSpace(e.ULabel)
 	e.RegistryOperator = strings.TrimSpace(e.RegistryOperator)
@@ -123,7 +127,7 @@ func (e *pslEntry) normalize() {
 	}
 }
 
-// Comment generates a comment string for the pslEntry. This string has a `//`
+// Comment generates a comment string for the gtldEntry. This string has a `//`
 // prefix and matches one of the following two forms.
 //
 // If the registry operator field is empty the comment will be of the form:
@@ -135,7 +139,7 @@ func (e *pslEntry) normalize() {
 //    '// <ALabel> : <DateOfContractSignature> <RegistryOperator>'
 //
 // In both cases the <DateOfContractSignature> may be empty.
-func (e pslEntry) Comment() string {
+func (e gtldEntry) Comment() string {
 	parts := []string{
 		"//",
 		e.ALabel,
@@ -147,176 +151,6 @@ func (e pslEntry) Comment() string {
 		parts = append(parts, e.RegistryOperator)
 	}
 	return strings.Join(parts, " ")
-}
-
-// gTLDDatSpan represents the span between the PSL_GTLD_SECTION_HEADER and
-// the PSL_GTLDS_SECTION_FOOTER in the PSL dat file.
-type gTLDDatSpan struct {
-	startIndex int
-	endIndex   int
-}
-
-var (
-	errNoHeader = fmt.Errorf("did not find expected header line %q",
-		PSL_GTLDS_SECTION_HEADER)
-	errMultipleHeaders = fmt.Errorf("found expected header line %q more than once",
-		PSL_GTLDS_SECTION_HEADER)
-	errNoFooter = fmt.Errorf("did not find expected footer line %q",
-		PSL_GTLDS_SECTION_FOOTER)
-)
-
-type errInvertedSpan struct {
-	span gTLDDatSpan
-}
-
-func (e errInvertedSpan) Error() string {
-	return fmt.Sprintf(
-		"found footer line %q before header line %q (index %d vs %d)",
-		PSL_GTLDS_SECTION_FOOTER, PSL_GTLDS_SECTION_HEADER,
-		e.span.endIndex, e.span.startIndex)
-}
-
-// validate checks that a given gTLDDatSpan is sensible. It returns an err if
-// the span is nil, if the start or end index haven't been set to > 0, or if the
-// end index is <= the the start index.
-func (s gTLDDatSpan) validate() error {
-	if s.startIndex <= 0 {
-		return errNoHeader
-	}
-	if s.endIndex <= 0 {
-		return errNoFooter
-	}
-	if s.endIndex <= s.startIndex {
-		return errInvertedSpan{span: s}
-	}
-	return nil
-}
-
-// datFile holds the individual lines read from the public suffix list dat file and
-// the span that holds the gTLD specific data section. It supports reading the
-// gTLD specific data, and replacing it.
-type datFile struct {
-	// lines holds the datfile contents split by "\n"
-	lines []string
-	// gTLDSpan holds the indexes where the gTLD data can be found in lines.
-	gTLDSpan gTLDDatSpan
-}
-
-type errSpanOutOfBounds struct {
-	span     gTLDDatSpan
-	numLines int
-}
-
-func (e errSpanOutOfBounds) Error() string {
-	return fmt.Sprintf(
-		"span out of bounds: start index %d, end index %d, number of lines %d",
-		e.span.startIndex, e.span.endIndex, e.numLines)
-}
-
-// validate validates the state of the datFile. It returns an error if
-// the gTLD span validate() returns an error, or if gTLD span endIndex is >= the
-// number of lines in the file.
-func (d datFile) validate() error {
-	if err := d.gTLDSpan.validate(); err != nil {
-		return err
-	}
-	if d.gTLDSpan.endIndex >= len(d.lines) {
-		return errSpanOutOfBounds{span: d.gTLDSpan, numLines: len(d.lines)}
-	}
-	return nil
-}
-
-// getGTLDLines returns the lines from the dat file within the gTLD data span,
-// or an error if the span isn't valid for the dat file.
-func (d datFile) getGTLDLines() ([]string, error) {
-	if err := d.validate(); err != nil {
-		return nil, err
-	}
-	return d.lines[d.gTLDSpan.startIndex:d.gTLDSpan.endIndex], nil
-}
-
-// ReplaceGTLDContent updates the dat file's lines to replace the gTLD data span
-// with new content.
-func (d *datFile) ReplaceGTLDContent(content string) error {
-	if err := d.validate(); err != nil {
-		return err
-	}
-
-	contentLines := strings.Split(content, "\n")
-	beforeLines := d.lines[0:d.gTLDSpan.startIndex]
-	afterLines := d.lines[d.gTLDSpan.endIndex:]
-	newLines := append(beforeLines, append(contentLines, afterLines...)...)
-
-	// Update the span based on the new content length
-	d.gTLDSpan.endIndex = len(beforeLines) + len(contentLines)
-	// and update the data file lines
-	d.lines = newLines
-	return nil
-}
-
-// String returns the dat file's lines joined together.
-func (d datFile) String() string {
-	return strings.Join(d.lines, "\n")
-}
-
-// readDatFile reads the contents of the PSL dat file from the provided path
-// and returns a representation holding all of the lines and the span where the gTLD
-// data is found within the dat file. An error is returned if the file can't be read
-// or if the gTLD data span can't be found or is invalid.
-func readDatFile(datFilePath string) (*datFile, error) {
-	pslDatBytes, err := ioutil.ReadFile(datFilePath)
-	if err != nil {
-		return nil, err
-	}
-	return readDatFileContent(string(pslDatBytes))
-}
-
-func readDatFileContent(pslData string) (*datFile, error) {
-	pslDatLines := strings.Split(pslData, "\n")
-
-	headerIndex, footerIndex := 0, 0
-	for i := 0; i < len(pslDatLines); i++ {
-		line := pslDatLines[i]
-
-		if line == PSL_GTLDS_SECTION_HEADER && headerIndex == 0 {
-			// If the line matches the header and we haven't seen the header yet, capture
-			// the index
-			headerIndex = i
-		} else if line == PSL_GTLDS_SECTION_HEADER && headerIndex != 0 {
-			// If the line matches the header and we've already seen the header return
-			// an error. This is unexpected.
-			return nil, errMultipleHeaders
-		} else if line == PSL_GTLDS_SECTION_FOOTER && footerIndex == 0 {
-			// If the line matches the footer, capture the index. We don't need
-			// to consider the case where we've already seen a footer because we break
-			// below when we have both a header and footer index.
-			footerIndex = i
-		}
-
-		// Break when we have found one header and one footer.
-		if headerIndex != 0 && footerIndex != 0 {
-			break
-		}
-	}
-
-	if headerIndex == 0 {
-		return nil, errNoHeader
-	} else if footerIndex == 0 {
-		return nil, errNoFooter
-	}
-
-	datFile := &datFile{
-		lines: pslDatLines,
-		gTLDSpan: gTLDDatSpan{
-			startIndex: headerIndex + 1,
-			endIndex:   footerIndex,
-		},
-	}
-	if err := datFile.validate(); err != nil {
-		return nil, err
-	}
-
-	return datFile, nil
 }
 
 // getData performs a HTTP GET request to the given URL and returns the
@@ -344,8 +178,8 @@ func getData(url string) ([]byte, error) {
 
 // filterGTLDs removes entries that are present in the legacyGTLDs map or have
 // ContractTerminated equal to true, or a non-empty RemovalDate.
-func filterGTLDs(entries []*pslEntry) []*pslEntry {
-	var filtered []*pslEntry
+func filterGTLDs(entries []*gtldEntry) []*gtldEntry {
+	var filtered []*gtldEntry
 	for _, entry := range entries {
 		if _, isLegacy := legacyGTLDs[entry.ALabel]; isLegacy {
 			continue
@@ -361,22 +195,22 @@ func filterGTLDs(entries []*pslEntry) []*pslEntry {
 	return filtered
 }
 
-// getPSLEntries fetches a list of pslEntry objects (or returns an error) by:
+// getGTLDPSLEntries fetches a list of gtldEntry objects (or returns an error) by:
 //   1. getting the raw JSON data from the provided url string.
-//   2. unmarshaling the JSON data to create pslEntry objects.
-//   3. normalizing the pslEntry objects.
+//   2. unmarshaling the JSON data to create gtldEntry objects.
+//   3. normalizing the gtldEntry objects.
 //   4. filtering out any legacy or contract terminated gTLDs
 //
-// If there are no pslEntry objects after unmarshaling the data in step 2 or
+// If there are no gtldEntry objects after unmarshaling the data in step 2 or
 // filtering the gTLDs in step 4 it is considered an error condition.
-func getPSLEntries(url string) ([]*pslEntry, error) {
+func getGTLDPSLEntries(url string) ([]*gtldEntry, error) {
 	respBody, err := getData(url)
 	if err != nil {
 		return nil, err
 	}
 
 	var results struct {
-		GTLDs []*pslEntry
+		GTLDs []*gtldEntry
 	}
 	if err := json.Unmarshal(respBody, &results); err != nil {
 		return nil, fmt.Errorf(
@@ -451,12 +285,12 @@ func renderHeader(writer io.Writer, clk clock) error {
 	return renderTemplate(writer, pslHeaderTemplate, templateData)
 }
 
-// renderData renders the given list of pslEntry objects using the pslTemplate.
+// renderData renders the given list of gtldEntry objects using the pslTemplate.
 // The rendered template data is written to the provided writer or an error is
 // returned.
-func renderData(writer io.Writer, entries []*pslEntry) error {
+func renderData(writer io.Writer, entries []*gtldEntry) error {
 	templateData := struct {
-		Entries []*pslEntry
+		Entries []*gtldEntry
 	}{
 		Entries: entries,
 	}
@@ -468,7 +302,7 @@ func renderData(writer io.Writer, entries []*pslEntry) error {
 // gTLD updates the existing dat file's contents will be returned. If there are
 // updates, the new updates will be spliced into place and the updated file contents
 // returned.
-func process(datFile *datFile, dataURL string, clk clock) (string, error) {
+func processGTLDs(datFile *datFile, dataURL string, clk clock) (string, error) {
 	// Get the lines for the gTLD data span - this includes both the header with the
 	// date and the actual gTLD entries.
 	spanLines, err := datFile.getGTLDLines()
@@ -494,8 +328,8 @@ func process(datFile *datFile, dataURL string, clk clock) (string, error) {
 	// The gTLD data can be found by skipping the header lines
 	existingData := strings.Join(spanLines[headerLen:], "\n")
 
-	// Fetch new PSL entries.
-	entries, err := getPSLEntries(dataURL)
+	// Fetch new gTLD PSL entries.
+	entries, err := getGTLDPSLEntries(dataURL)
 	if err != nil {
 		return "", err
 	}
@@ -543,8 +377,8 @@ func main() {
 	datFile, err := readDatFile(*pslDatFile)
 	ifErrQuit(err)
 
-	// Process the dat file.
-	content, err := process(datFile, ICANN_GTLD_JSON_URL, nil)
+	// Process the dat file to update GTLDs based on ICANN_GTLD_JSON_URL data.
+	content, err := processGTLDs(datFile, ICANN_GTLD_JSON_URL, nil)
 	ifErrQuit(err)
 
 	// If we're not overwriting the file, print the content to stdout.
