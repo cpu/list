@@ -3,10 +3,6 @@ compiler: gcc
 
 script: 
   - make
-  - go test -v -coverprofile=coverage.out tools/*.go
-
-go:
-  - "1.15.x"
 
 addons:
     apt:
