@@ -8,11 +8,11 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"text/template"
 	"time"
 
+	"github.com/publicsuffix/list/go/datasource/icann"
 	pslGo "github.com/weppos/publicsuffix-go/publicsuffix"
 )
 
@@ -27,29 +27,6 @@ type realClock struct{}
 // Now returns the current time.Time using the system clock.
 func (c realClock) Now() time.Time {
 	return time.Now()
-}
-
-// getData performs a HTTP GET request to the given URL and returns the
-// response body bytes or returns an error. An HTTP response code other than
-// http.StatusOK (200) is considered to be an error.
-func getData(url string) ([]byte, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code fetching data "+
-			"from %q : expected status %d got %d",
-			url, http.StatusOK, resp.StatusCode)
-	}
-
-	respBody, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	return respBody, nil
 }
 
 // renderTemplate renders the given template to the provided writer, using the
@@ -92,8 +69,9 @@ func main() {
 	datFile, err := readDatFile(*pslDatFile)
 	ifErrQuit(err)
 
-	// Process the dat file to update GTLDs based on ICANN_GTLD_JSON_URL data.
-	content, err := processGTLDs(datFile, ICANN_GTLD_JSON_URL, nil)
+	// Process the dat file to update GTLDs based on the ICANN
+	// GTLD_JSON_REGISTRY_URL data.
+	content, err := processGTLDs(datFile, icann.GTLD_JSON_REGISTRY_URL, nil)
 	ifErrQuit(err)
 
 	pslList, err := pslGo.NewListFromString(content, nil)
