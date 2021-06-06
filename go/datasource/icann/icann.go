@@ -55,6 +55,9 @@ type GTLDEntry struct {
 	RegistryOperator string
 	// DateOfContractSignature holds the date the gTLD contract was signed (may be empty).
 	DateOfContractSignature string
+	// DateOfDelegation holds the date the gTLD was delegated from a root zone
+	// (may be empty).
+	DateOfDelegation string
 	// ContractTerminated indicates whether the contract has been terminated by
 	// ICANN. When rendered by the pslGTLDTemplate only entries with
 	// ContractTerminated = false are included.
@@ -113,15 +116,17 @@ func IsLegacyGTLD(tld string) bool {
 	return legacyGTLDs[strings.ToLower(tld)]
 }
 
-// filterGTLDs removes entries that are present in the legacyGTLDs map or have
-// ContractTerminated equal to true, or a non-empty RemovalDate.
+// filterGTLDs removes entries that are present in the legacyGTLDs map, that have
+// a ContractTerminated field equal to true and no delegation date, or
+// a non-empty RemovalDate. Entries with ContractTerminated true and a delegation
+// date (but no removal date) are left in.
 func filterGTLDs(entries []*GTLDEntry) []*GTLDEntry {
 	var filtered []*GTLDEntry
 	for _, entry := range entries {
 		if IsLegacyGTLD(entry.ALabel) {
 			continue
 		}
-		if entry.ContractTerminated {
+		if entry.ContractTerminated && entry.DateOfDelegation == "" {
 			continue
 		}
 		if entry.RemovalDate != "" {

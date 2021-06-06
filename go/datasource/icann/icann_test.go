@@ -159,11 +159,30 @@ func TestGetGTLDs(t *testing.T) {
 				RegistryOperator:        "Department of Historical Baggage and Technical Debt",
 			},
 			{
-				ALabel:                  "terminated",
+				ALabel:                  "terminated-not-yet-delegated",
 				DateOfContractSignature: "1987-10-31",
-				// NOTE: we include a contract terminated = true entry here to test that
-				// filtering of terminated entries occurs.
+				// NOTE: we include a contract terminated = true entry here, with no date of
+				// delegation to test that filtering of terminated and undelegated
+				// entries occurs.
 				ContractTerminated: true,
+			},
+			{
+				ALabel:                  "terminated-and-delegated",
+				DateOfContractSignature: "1987-10-31",
+				// NOTE: we include a contract terminated = true entry here with a date
+				// of delegation to ensure that it remains post-filtering.
+				DateOfDelegation:   "2021-06-05",
+				ContractTerminated: true,
+			},
+			{
+				ALabel:                  "terminated-and-removed",
+				DateOfContractSignature: "1987-10-31",
+				// NOTE: we include a contract terminated = true entry here with a date
+				// of delegation *and* a removal date to ensure that filtering of removed
+				// entries occurs.
+				DateOfDelegation:   "2021-06-05",
+				ContractTerminated: true,
+				RemovalDate:        "2021-06-06",
 			},
 		},
 	}
@@ -184,6 +203,13 @@ func TestGetGTLDs(t *testing.T) {
 			DateOfContractSignature: "2019-06-13",
 			RegistryOperator: "@cpu's bargain gTLD emporium " +
 				"(now with bonus whitespace)",
+		},
+		{
+			ALabel:                  "terminated-and-delegated",
+			ULabel:                  "terminated-and-delegated",
+			DateOfContractSignature: "1987-10-31",
+			DateOfDelegation:        "2021-06-05",
+			ContractTerminated:      true,
 		},
 	}
 
@@ -252,14 +278,16 @@ func TestGetGTLDsEmptyFilteredResults(t *testing.T) {
 			{
 				ALabel:                  "terminated",
 				DateOfContractSignature: "1987-10-31",
-				// NOTE: Setting ContractTerminated to ensure filtering.
+				// NOTE: Setting ContractTerminated and no DateOfDelegation to ensure
+				// filtering.
 				ContractTerminated: true,
 			},
 			{
 				ALabel:                  "removed",
 				DateOfContractSignature: "1999-10-31",
 				RegistryOperator:        "Department of Historical Baggage and Technical Debt",
-				RemovalDate:             "2019-08-06",
+				// NOTE: Setting RemovalDate to ensure filtering.
+				RemovalDate: "2019-08-06",
 			},
 		},
 	}
