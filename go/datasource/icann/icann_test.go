@@ -132,7 +132,7 @@ func (h *mockHandler) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
 	_, _ = w.Write(h.respData)
 }
 
-func TestGetPSLEntries(t *testing.T) {
+func TestGetGTLDs(t *testing.T) {
 	mockData := struct {
 		GTLDs []GTLDEntry
 	}{
@@ -213,7 +213,9 @@ func TestGetPSLEntries(t *testing.T) {
 	}
 }
 
-func TestGetPSLEntriesEmptyResults(t *testing.T) {
+func TestGetGTLDsEmptyResults(t *testing.T) {
+	t.Parallel()
+
 	// Mock an empty result
 	mockData := struct {
 		GTLDs []GTLDEntry
@@ -233,7 +235,9 @@ func TestGetPSLEntriesEmptyResults(t *testing.T) {
 	}
 }
 
-func TestGetPSLEntriesEmptyFilteredResults(t *testing.T) {
+func TestGetGTLDsEmptyFilteredResults(t *testing.T) {
+	t.Parallel()
+
 	// Mock data that will be filtered to an empty list
 	mockData := struct {
 		GTLDs []GTLDEntry
