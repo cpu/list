@@ -9,8 +9,21 @@ then
   exit 1
 fi
 
-BASEDIR=$(dirname "$0")
+BIN_CMD="newgtlds"
+PROJECT_ROOT="../$(dirname "$0")"
 
-go run "$BASEDIR/newgtlds.go" \
-  -overwrite \
-  -psl-dat-file="$BASEDIR/../public_suffix_list.dat"
+if ! [ -x "$(command $BIN_CMD)" ]
+then
+  echo "installing newgtlds utility to GOPATH" >&2
+  pushd "$PROJECT_ROOT/go"
+    go install -v ./...
+  popd
+fi
+
+if ! [ -x "$(command $BIN_CMD)" ]
+then
+  echo "installed Go tools module but $BIN_CMD not found on \$PATH..." >&2
+  exit 1
+fi
+
+newgtlds -overwrite -psl-dat-file="$PROJECT_ROOT/public_suffix_list.dat"

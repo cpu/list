@@ -1,4 +1,3 @@
-# Put this automation on hold, until it is able to ignore changes that only update the header timestamp.
 name: tld-update
 on:
   schedule:
@@ -16,10 +15,11 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.15
+          go-version: ^1.16
 
       - name: Run unit tests
-        run: go test tools/*.go
+        run: go test -v ./...
+        working-directory: go/
 
       - name: Set current date
         id: get-date
