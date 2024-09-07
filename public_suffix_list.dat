@@ -6710,7 +6710,7 @@ org.zw
 
 // newGTLDs
 
-// List of new gTLDs imported from https://www.icann.org/resources/registries/gtlds/v2/gtlds.json on 2024-05-31T15:16:08Z
+// List of new gTLDs imported from https://www.icann.org/resources/registries/gtlds/v2/gtlds.json on 2024-09-07T15:04:05Z
 // This list is auto-generated, don't edit it manually.
 // aaa : American Automobile Association, Inc.
 // https://www.iana.org/domains/root/db/aaa.html
@@ -8112,7 +8112,7 @@ forex
 // https://www.iana.org/domains/root/db/forsale.html
 forsale
 
-// forum : Fegistry, LLC
+// forum : Waterford Limited
 // https://www.iana.org/domains/root/db/forum.html
 forum
 
@@ -9024,7 +9024,7 @@ maison
 // https://www.iana.org/domains/root/db/makeup.html
 makeup
 
-// man : MAN SE
+// man : MAN Truck & Bus SE
 // https://www.iana.org/domains/root/db/man.html
 man
 
@@ -9227,10 +9227,6 @@ nab
 // nagoya : GMO Registry, Inc.
 // https://www.iana.org/domains/root/db/nagoya.html
 nagoya
-
-// natura : NATURA COSMÉTICOS S.A.
-// https://www.iana.org/domains/root/db/natura.html
-natura
 
 // navy : Dog Beach, LLC
 // https://www.iana.org/domains/root/db/navy.html
@@ -9688,7 +9684,7 @@ realestate
 // https://www.iana.org/domains/root/db/realtor.html
 realtor
 
-// realty : Internet Naming Company LLC
+// realty : Waterford Limited
 // https://www.iana.org/domains/root/db/realty.html
 realty
 
@@ -10003,10 +9999,6 @@ shangrila
 // sharp : Sharp Corporation
 // https://www.iana.org/domains/root/db/sharp.html
 sharp
-
-// shaw : Shaw Cablesystems G.P.
-// https://www.iana.org/domains/root/db/shaw.html
-shaw
 
 // shell : Shell Information Technology International Inc
 // https://www.iana.org/domains/root/db/shell.html
@@ -10500,7 +10492,7 @@ ups
 // https://www.iana.org/domains/root/db/vacations.html
 vacations
 
-// vana : Internet Naming Company LLC
+// vana : D3 Registry LLC
 // https://www.iana.org/domains/root/db/vana.html
 vana
 
